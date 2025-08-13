@@ -1,93 +1,165 @@
 
-# Sistema de login para reservas de restaurante
-# Separado para administradores y usuarios
-import getpass
+import flet as ft
+import os
 
-
-# Archivo donde se guardan los usuarios
 USUARIOS_FILE = "usuarios.txt"
 
-def cargar_usuarios():
-    usuarios = {}
-    try:
-        with open(USUARIOS_FILE, "r", encoding="utf-8") as f:
-            for linea in f:
-                partes = linea.strip().split(",")
-                if len(partes) == 5:
-                    nombre, dni, username, password, rol = partes
-                    usuarios[username] = {"nombre": nombre, "dni": dni, "password": password, "rol": rol}
-                elif len(partes) == 3:
-                    # Para compatibilidad con versiones anteriores
-                    username, password, rol = partes
-                    usuarios[username] = {"nombre": "", "dni": "", "password": password, "rol": rol}
-    except FileNotFoundError:
-        # Si no existe, crear algunos por defecto
-        usuarios = {
-            'admin': {'nombre': 'Administrador', 'dni': '00000000', 'password': 'admin123', 'rol': 'admin'},
-            'usuario1': {'nombre': 'Usuario Uno', 'dni': '11111111', 'password': 'user123', 'rol': 'usuario'},
-            'usuario2': {'nombre': 'Usuario Dos', 'dni': '22222222', 'password': 'user456', 'rol': 'usuario'}
-        }
-        guardar_usuarios(usuarios)
-    return usuarios
 
-def guardar_usuarios(usuarios):
-    with open(USUARIOS_FILE, "w", encoding="utf-8") as f:
-        for username, data in usuarios.items():
-            f.write(f"{data.get('nombre','')},{data.get('dni','')},{username},{data['password']},{data['rol']}\n")
+# Ahora los usuarios se guardan como: nombre,dni,usuario,contrasena,rol
+def verificar_usuario(usuario, contrasena):
+    if not os.path.exists(USUARIOS_FILE):
+        return False
+    with open(USUARIOS_FILE, "r", encoding="utf-8") as f:
+        for linea in f:
+            datos = linea.strip().split(",")
+            if len(datos) == 5 and datos[2] == usuario and datos[3] == contrasena:
+                return True
+    return False
 
-USUARIOS = cargar_usuarios()
+def crear_usuario(nombre, dni, usuario, contrasena):
+    rol = "usuario"
+    if not os.path.exists(USUARIOS_FILE):
+        with open(USUARIOS_FILE, "w", encoding="utf-8"):
+            pass
+    with open(USUARIOS_FILE, "r", encoding="utf-8") as f:
+        for linea in f:
+            datos = linea.strip().split(",")
+            if len(datos) == 5 and datos[2] == usuario:
+                return False  # Usuario ya existe
+    with open(USUARIOS_FILE, "a", encoding="utf-8") as f:
+        f.write(f"{nombre},{dni},{usuario},{contrasena},{rol}\n")
+    return True
 
 
-def login():
-    print("=== Sistema de Login ===")
-    username = input("Usuario: ")
-    password = getpass.getpass("Contraseña: ")
-    user = USUARIOS.get(username)
-    if user and user['password'] == password:
-        nombre = user.get('nombre', username)
-        print(f"Bienvenido, {nombre}!")
-        return user['rol']
-    else:
-        print("Usuario o contraseña incorrectos.")
-        return None
+def main(page: ft.Page):
+    page.title = "Login y Registro"
+    page.window_width = 400
+    page.window_height = 400
 
-def crear_usuario():
-    print("=== Crear nuevo usuario ===")
-    nombre = input("Nombre completo: ")
-    dni = input("DNI: ")
-    while True:
-        username = input("Nombre de usuario: ")
-        if username in USUARIOS:
-            print("Ese usuario ya existe. Intente con otro nombre.")
+    # --- Login widgets ---
+    login_usuario = ft.TextField(label="Usuario", width=300)
+    login_contrasena = ft.TextField(label="Contraseña", password=True, can_reveal_password=True, width=300)
+    login_mensaje = ft.Text(value="", color="red")
+
+    # --- Registro widgets ---
+    reg_nombre = ft.TextField(label="Nombre completo", width=300)
+    reg_dni = ft.TextField(label="DNI", width=300)
+    reg_usuario = ft.TextField(label="Usuario", width=300)
+    reg_contrasena = ft.TextField(label="Contraseña", password=True, can_reveal_password=True, width=300)
+    reg_mensaje = ft.Text(value="", color="red")
+
+    def mostrar_login():
+        page.controls.clear()
+        bordo = "#800000"
+        def hover_anim(e):
+            e.control.scale = 1.08 if e.data == "true" else 1
+            e.control.update()
+        page.add(
+            ft.Row([
+                ft.Column([
+                    ft.Image(src="kansasgrill.jpg", width=180, height=120, fit=ft.ImageFit.CONTAIN),
+                    login_usuario,
+                    login_contrasena,
+                    ft.Row([
+                        ft.ElevatedButton(
+                            "Iniciar sesión",
+                            on_click=login_click,
+                            style=ft.ButtonStyle(
+                                bgcolor= bordo,
+                                color="white",
+                                animation_duration=200
+                            ),
+                            on_hover=hover_anim
+                        ),
+                        ft.ElevatedButton(
+                            "Crear usuario",
+                            on_click=lambda _: mostrar_registro(),
+                            style=ft.ButtonStyle(
+                                bgcolor= bordo,
+                                color="white",
+                                animation_duration=200
+                            ),
+                            on_hover=hover_anim
+                        ),
+                    ], alignment="center"),
+                    login_mensaje
+                ], alignment="center", horizontal_alignment="center", spacing=20)
+            ], alignment="center", vertical_alignment="center", expand=True)
+        )
+        login_usuario.value = ""
+        login_contrasena.value = ""
+        login_mensaje.value = ""
+        page.update()
+
+    def mostrar_registro():
+        page.controls.clear()
+        bordo = "#800000"
+        def hover_anim(e):
+            e.control.scale = 1.08 if e.data == "true" else 1
+            e.control.update()
+        page.add(
+            ft.Row([
+                ft.Column([
+                    ft.Image(src="kansasgrill.jpg", width=180, height=120, fit=ft.ImageFit.CONTAIN),
+                    reg_nombre,
+                    reg_dni,
+                    reg_usuario,
+                    reg_contrasena,
+                    ft.Row([
+                        ft.ElevatedButton(
+                            "Registrar",
+                            on_click=registrar_usuario,
+                            style=ft.ButtonStyle(
+                                bgcolor= bordo,
+                                color="white",
+                                animation_duration=200
+                            ),
+                            on_hover=hover_anim
+                        ),
+                        ft.ElevatedButton(
+                            "Volver",
+                            on_click=lambda _: mostrar_login(),
+                            style=ft.ButtonStyle(
+                                bgcolor= bordo,
+                                color="white",
+                                animation_duration=200
+                            ),
+                            on_hover=hover_anim
+                        ),
+                    ], alignment="center"),
+                    reg_mensaje
+                ], alignment="center", horizontal_alignment="center", spacing=20)
+            ], alignment="center", vertical_alignment="center", expand=True)
+        )
+        reg_nombre.value = ""
+        reg_dni.value = ""
+        reg_usuario.value = ""
+        reg_contrasena.value = ""
+        reg_mensaje.value = ""
+        page.update()
+
+    def login_click(_):
+        if verificar_usuario(login_usuario.value, login_contrasena.value):
+            login_mensaje.value = "¡Login exitoso!"
+            login_mensaje.color = "green"
         else:
-            break
-    password = getpass.getpass("Contraseña: ")
-    while True:
-        rol = input("Rol (admin/usuario): ").strip().lower()
-        if rol in ["admin", "usuario"]:
-            break
-        else:
-            print("Rol inválido. Debe ser 'admin' o 'usuario'.")
-    USUARIOS[username] = {"nombre": nombre, "dni": dni, "password": password, "rol": rol}
-    guardar_usuarios(USUARIOS)
-    print(f"Usuario '{username}' creado exitosamente con rol '{rol}'.")
+            login_mensaje.value = "Usuario o contraseña incorrectos."
+            login_mensaje.color = "red"
+        page.update()
 
+    def registrar_usuario(_):
+        if not (reg_nombre.value and reg_dni.value and reg_usuario.value and reg_contrasena.value):
+            reg_mensaje.value = "Completa todos los campos."
+            reg_mensaje.color = "red"
+        elif crear_usuario(reg_nombre.value, reg_dni.value, reg_usuario.value, reg_contrasena.value):
+            reg_mensaje.value = "Usuario creado exitosamente."
+            reg_mensaje.color = "green"
+        else:
+            reg_mensaje.value = "El usuario ya existe."
+            reg_mensaje.color = "red"
+        page.update()
+
+    mostrar_login()
 
 if __name__ == "__main__":
-    while True:
-        print("\n1. Iniciar sesión")
-        print("2. Crear nuevo usuario")
-        print("3. Salir")
-        opcion = input("Seleccione una opción: ")
-        if opcion == "1":
-            rol = None
-            while not rol:
-                rol = login()
-            # Aquí puedes continuar con el menú según el rol, pero no mostrar el rol al usuario
-        elif opcion == "2":
-            crear_usuario()
-        elif opcion == "3":
-            print("Saliendo...")
-            break
-        else:
-            print("Opción inválida.")
+    ft.app(target=main, view=ft.AppView.FLET_APP)
