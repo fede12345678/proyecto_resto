@@ -1,0 +1,5 @@
+,,admin,admin123,admin
+,,usuario1,user123,usuario
+,,usuario2,user456,usuario
+,,fede,fede1234,admin
+Federico Garcia Schiro,43769534,federic,fede1234,admin
