@@ -38,14 +38,24 @@ def main(page: ft.Page):
 
     # --- Login widgets ---
     login_usuario = ft.TextField(label="Usuario", width=300)
-    login_contrasena = ft.TextField(label="Contraseña", password=True, can_reveal_password=True, width=300)
+    login_contrasena = ft.TextField(
+        label="Contraseña",
+        password=True,
+        can_reveal_password=True,
+        width=300
+    )
     login_mensaje = ft.Text(value="", color="red")
 
     # --- Registro widgets ---
     reg_nombre = ft.TextField(label="Nombre completo", width=300)
     reg_dni = ft.TextField(label="DNI", width=300)
     reg_usuario = ft.TextField(label="Usuario", width=300)
-    reg_contrasena = ft.TextField(label="Contraseña", password=True, can_reveal_password=True, width=300)
+    reg_contrasena = ft.TextField(
+        label="Contraseña",
+        password=True,
+        can_reveal_password=True,
+        width=300
+    )
     reg_mensaje = ft.Text(value="", color="red")
 
     def mostrar_login():
@@ -57,7 +67,7 @@ def main(page: ft.Page):
         page.add(
             ft.Row([
                 ft.Column([
-                    ft.Image(src="kansasgrill.jpg", width=180, height=120, fit=ft.ImageFit.CONTAIN),
+                    ft.Image(src="kansasgrill.jpg", width=240, height=160, fit=ft.ImageFit.CONTAIN),
                     login_usuario,
                     login_contrasena,
                     ft.Row([
@@ -138,14 +148,25 @@ def main(page: ft.Page):
         reg_mensaje.value = ""
         page.update()
 
+    def mostrar_cargando():
+        page.controls.clear()
+        page.add(
+            ft.Row([
+                ft.Column([
+                    ft.ProgressBar(width=400, color="#800000", bgcolor="#f0e0e0", value=None),
+                    ft.Text("Cargando...", size=20, weight="bold", color="#800000")
+                ], alignment="center", horizontal_alignment="center", spacing=30)
+            ], alignment="center", vertical_alignment="center", expand=True)
+        )
+        page.update()
+
     def login_click(_):
         if verificar_usuario(login_usuario.value, login_contrasena.value):
-            login_mensaje.value = "¡Login exitoso!"
-            login_mensaje.color = "green"
+            mostrar_cargando()
         else:
             login_mensaje.value = "Usuario o contraseña incorrectos."
             login_mensaje.color = "red"
-        page.update()
+            page.update()
 
     def registrar_usuario(_):
         if not (reg_nombre.value and reg_dni.value and reg_usuario.value and reg_contrasena.value):
